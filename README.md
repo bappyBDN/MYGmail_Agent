@@ -62,5 +62,3 @@ The following environment variables are required:
 This application processes email data locally and only sends AI-generated replies. No email content is stored permanently outside of your Supabase instance (if used for RAG) and feedback database.
 
 ## License
-
-MIT
