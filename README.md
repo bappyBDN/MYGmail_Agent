@@ -22,7 +22,7 @@ Once the draft is approved and the rating is submitted, the operator clicks "Sen
 The system features an analytics dashboard that tracks the overall performance of the AI Agent. It visualizes the total inquiries, the number of automated drafts, and the average human satisfaction rating over time.
 ![Analytics Dashboard](Image/frontend_3.png) <br>
 *Database structure mapping the feedback loop:*
-![Database Tables](Image/db_table.png) 
+![Database Tables](Image/DB_Table.png) 
 
 ## Features
 
