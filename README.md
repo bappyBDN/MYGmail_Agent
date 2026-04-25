@@ -20,7 +20,7 @@ Before anything is sent, a human operator reviews the AI-generated draft.
 Once the draft is approved and the rating is submitted, the operator clicks "Send". The application uses the Gmail API to send the finalized email directly to the client, seamlessly continuing the email thread.
 ![Client Email View](Image/send_mail.png) ### 5. 📊 Performance & Analytics Tracking
 The system features an analytics dashboard that tracks the overall performance of the AI Agent. It visualizes the total inquiries, the number of automated drafts, and the average human satisfaction rating over time.
-![Analytics Dashboard](Image/frontend_3.png) <br>
+![Analytics Dashboard](Image/Frontend_3.png) <br>
 *Database structure mapping the feedback loop:*
 ![Database Tables](Image/DB_Table.png) 
 
