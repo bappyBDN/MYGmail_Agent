@@ -84,3 +84,11 @@ The following environment variables are required:
 This application processes email data locally and only sends AI-generated replies. No email content is stored permanently outside of your Supabase instance (if used for RAG) and feedback database.
 
 ## License
+## 🤝 Contributing
+Feel free to fork this repository, open issues, or submit pull requests to improve the bot's logic or add new features.
+
+---
+**Developed with ❤️ by [Bappy Chandra Debnath]**
+
+📧 **Email:** [bappynath2001@gmail.com](mailto:bappynath2001@gmail.com)  
+🌐 **Portfolio:** [bappybdn.github.io/portfolio](https://bappybdn.github.io/portfolio.html)
