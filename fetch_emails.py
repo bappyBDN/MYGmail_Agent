@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from sentence_transformers import SentenceTransformer
 from groq import Groq
 
-# ১. সেটিংস ও ক্লায়েন্ট লোড
+
 load_dotenv()
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -26,7 +26,7 @@ embed_model = load_embed_model()
 
 st.set_page_config(page_title="Vizuara AI Agent", layout="wide")
 
-# ২. জিমেইল ফাংশন (লাইভ ডেটা ফেচিং)
+
 def get_gmail_service():
     if not os.path.exists('token.json'):
         st.error("token.json পাওয়া যায়নি! আগে fetch_emails.py রান করুন।")
@@ -37,7 +37,7 @@ def get_gmail_service():
 def fetch_live_emails():
     service = get_gmail_service()
     if not service: return []
-    # ইনবক্সের লেটেস্ট ১৫টি ইমেইল (shuvo-র মেইল সহ সব আসবে)
+   
     results = service.users().messages().list(userId='me', q="label:INBOX", maxResults=15).execute()
     messages = results.get('messages', [])
     
@@ -68,7 +68,7 @@ def fetch_live_emails():
         })
     return email_list
 
-# ৩. মেইন অ্যাপ ইন্টারফেস
+
 st.title("📧 Vizuara AI Live Agent")
 
 if st.sidebar.button("🔄 Sync Inbox (Live)"):
@@ -78,17 +78,17 @@ if st.sidebar.button("🔄 Sync Inbox (Live)"):
 if 'live_emails' not in st.session_state:
     st.session_state.live_emails = []
 
-# ৪. ইমেইল লিস্ট ডিসপ্লে
+
 st.sidebar.subheader("Recent Inquiries")
 for email in st.session_state.live_emails:
-    # চেক করা এই ইমেইলের জন্য অলরেডি রিপ্লাই জেনারেট করা হয়েছে কি না
+    
     db_check = supabase.table("replies").select("id").eq("email_id", email['gmail_id']).execute()
     icon = "✅" if db_check.data else "📩"
     
     if st.sidebar.button(f"{icon} {email['from'][:18]}...", key=email['gmail_id']):
         st.session_state.current_email = email
 
-# ৫. ডিটেইলস এবং কন্ডিশনাল সেভিং লজিক
+
 if 'current_email' in st.session_state:
     e = st.session_state.current_email
     col1, col2 = st.columns([1, 1])
@@ -101,32 +101,32 @@ if 'current_email' in st.session_state:
     with col2:
         st.subheader("AI Smart Reply")
         
-        # ডাটাবেস থেকে চেক করা রিপ্লাই আছে কি না
+      
         reply_res = supabase.table("replies").select("*").eq("email_id", e['gmail_id']).execute()
         
         if reply_res.data:
-            # যদি অলরেডি ডাটাবেসে থাকে
+          
             draft = reply_res.data[0]
             st.success("এটি ডাটাবেস থেকে লোড করা হয়েছে।")
             final_body = st.text_area("Edit Draft:", value=draft['ai_draft'], height=350)
             if st.button("🚀 Send Reply"):
                 st.write("Sending logic...")
         else:
-            # যদি ডাটাবেসে না থাকে
+    
             st.warning("এই ইমেইলটি এখনও ডাটাবেসে সেভ করা হয়নি।")
             if st.button("🤖 Generate AI Draft & Save to DB"):
                 with st.spinner("RAG + Groq কাজ করছে..."):
-                    # ১. কোর্স রিট্রিভাল
+                   
                     query_vec = embed_model.encode(e['body']).tolist()
                     match_res = supabase.rpc('match_courses', {'query_embedding': query_vec, 'match_threshold': 0.2, 'match_count': 3}).execute()
                     context = "\n".join([f"- {c['course_name']}: {c['course_link']}" for c in match_res.data])
                     
-                    # ২. Groq জেনারেশন
+                  
                     prompt = f"Inquiry: {e['body']}\n\nCourses:\n{context}\n\nWrite a professional reply."
                     chat = groq_client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
                     ai_reply = chat.choices[0].message.content
                     
-                    # ৩. কন্ডিশনাল সেভিং: প্রথমে ইমেইলটি 'emails' টেবিলে সেভ করা
+                  
                     email_record = {
                         "gmail_message_id": e['gmail_id'],
                         "thread_id": e['thread_id'],
@@ -135,10 +135,10 @@ if 'current_email' in st.session_state:
                         "body": e['body'],
                         "received_at": datetime.now().isoformat()
                     }
-                    # যদি ইমেইলটি আগে থেকে না থাকে তবেই ইনসার্ট হবে (UPSERT লজিক)
+                
                     supabase.table("emails").upsert(email_record, on_conflict="gmail_message_id").execute()
                     
-                    # ৪. এরপর রিপ্লাইটি সেভ করা
+                   
                     supabase.table("replies").insert({
                         "email_id": e['gmail_id'],
                         "ai_draft": ai_reply,
