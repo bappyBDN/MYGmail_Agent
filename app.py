@@ -11,10 +11,10 @@ from googleapiclient.discovery import build
 from sentence_transformers import SentenceTransformer
 from groq import Groq
 
-# আপনার তৈরি করা মেথডটি ইমপোর্ট করুন
+
 from gmail_sender import send_gmail_reply 
 
-# ১. কনফিগারেশন ও ক্লায়েন্ট ইনিশিয়ালাইজেশন
+
 load_dotenv()
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -23,14 +23,14 @@ GROQ_API_KEY = os.getenv("GROK_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# এম্বেডিং মডেল ক্যাশ করে রাখা যাতে বারবার লোড না হয়
+
 @st.cache_resource
 def load_embed_model():
     return SentenceTransformer('all-MiniLM-L6-v2')
 
 embed_model = load_embed_model()
 
-# ২. প্রফেশনাল UI স্টাইলিং (Custom CSS)
+
 st.set_page_config(page_title="Vizuara AI Agent", page_icon="⚡", layout="wide")
 
 st.markdown("""
@@ -43,7 +43,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ৩. জিমেইল ফাংশন (লাইভ ডেটা)
+
 def get_gmail_service():
     if not os.path.exists('token.json'):
         st.error("Error: token.json not found! Please run your login script first.")
@@ -54,7 +54,7 @@ def get_gmail_service():
 def fetch_live_emails():
     service = get_gmail_service()
     if not service: return []
-    # label:INBOX ব্যবহার করা হয়েছে যাতে 'shuvo'-র মেইল সহ সব নতুন মেইল আসে
+
     results = service.users().messages().list(userId='me', q="label:INBOX", maxResults=15).execute()
     messages = results.get('messages', [])
     
@@ -85,7 +85,7 @@ def fetch_live_emails():
         })
     return email_list
 
-# ৪. অ্যাপ লেআউট (TABS)
+
 tab_workspace, tab_analytics = st.tabs(["📥 Email Workspace", "📊 Performance & Feedback"])
 
 # --- TAB 1: WORKSPACE ---
@@ -104,7 +104,7 @@ with tab_workspace:
 
         st.divider()
         for email in st.session_state.live_emails:
-            # চেক করা রিপ্লাই স্ট্যাটাস
+           
             db_res = supabase.table("replies").select("status").eq("email_id", email['gmail_id']).execute()
             status_icon = "📩"
             if db_res.data:
@@ -125,7 +125,7 @@ with tab_workspace:
             
             st.divider()
 
-            # রিপ্লাই এবং ফিডব্যাক সেকশন
+            
             db_reply = supabase.table("replies").select("*").eq("email_id", e['gmail_id']).execute()
             
             if db_reply.data:
@@ -140,7 +140,7 @@ with tab_workspace:
                     
                     if st.button("🚀 Send Reply Now", use_container_width=True):
                         with st.spinner("Sending..."):
-                            # ইমেইল এক্সট্রাক্ট করা
+                           
                             recipient = re.findall(r'[\w\.-]+@[\w\.-]+', e['from'])
                             to_addr = recipient[0] if recipient else e['from']
                             
@@ -154,7 +154,7 @@ with tab_workspace:
                                 st.balloons()
                                 st.rerun()
 
-                # ⭐ ফিডব্যাক সেকশন (শুধুমাত্র যদি রিপ্লাই জেনারেট হয়ে থাকে)
+                
                 st.divider()
                 st.subheader("⭐ Feedback")
                 with st.expander("Rate this AI Response"):
@@ -170,22 +170,22 @@ with tab_workspace:
             
             else:
                 st.warning("No AI draft found for this inquiry.")
-                # টোন সিলেক্টর
+               
                 tone = st.selectbox("Reply Tone:", ["Professional", "Friendly", "Concise"])
                 
                 if st.button("🪄 Generate AI Reply & Save to DB", use_container_width=True):
                     with st.spinner("RAG + Groq is working..."):
-                        # ১. RAG লজিক
+                       
                         query_vec = embed_model.encode(e['body']).tolist()
                         match_res = supabase.rpc('match_courses', {'query_embedding': query_vec, 'match_threshold': 0.2, 'match_count': 3}).execute()
                         context = "\n".join([f"- {c['course_name']}: {c['course_link']}" for c in match_res.data])
                         
-                        # ২. Groq লজিক
+                       
                         prompt = f"Counselor Tone: {tone}. Student Inquiry: {e['body']}. Related Courses: {context}. Task: Write a professional response."
                         chat = groq_client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
                         ai_reply = chat.choices[0].message.content
                         
-                        # ৩. কন্ডিশনাল সেভ (Email + Reply)
+                     
                         supabase.table("emails").upsert({"gmail_message_id": e['gmail_id'], "thread_id": e['thread_id'], "from_email": e['from'], "subject": e['subject'], "body": e['body'], "received_at": datetime.now().isoformat()}, on_conflict="gmail_message_id").execute()
                         supabase.table("replies").insert({"email_id": e['gmail_id'], "ai_draft": ai_reply, "status": "draft"}).execute()
                         st.rerun()
@@ -196,7 +196,7 @@ with tab_workspace:
 with tab_analytics:
     st.header("📊 AI Performance & Feedback Dashboard")
     
-    # মেট্রিক্স আনা
+ 
     replies_data = supabase.table("replies").select("status").execute()
     feedback_data = supabase.table("feedback").select("star_rating, text_feedback").execute()
     
