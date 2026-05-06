@@ -15,25 +15,25 @@ def send_gmail_reply(to_email, subject, body_text, thread_id, message_id):
     creds = Credentials.from_authorized_user_file(token_path)
     service = build('gmail', 'v1', credentials=creds)
 
-    # ১. সাবজেক্ট ঠিক করা
+  
     if not subject.lower().startswith("re:"):
         subject = f"Re: {subject}"
 
-    # ২. MIMEText তৈরি (UTF-8 এবং From হেডারসহ)
+   
     message = MIMEText(body_text, 'plain', 'utf-8')
     message['to'] = to_email
-    message['from'] = 'me'  # এটি জিমেইলকে বলে যে আপনি নিজে পাঠাচ্ছেন
+    message['from'] = 'me'  
     message['subject'] = subject
     
-    # ৩. থ্রেডিং হেডার (যাতে রিপ্লাই হিসেবে দেখায়)
+  
     message['In-Reply-To'] = message_id
     message['References'] = message_id
 
-    # ৪. এনকোডিং
+িং
     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
     
     try:
-        # ৫. মেসেজ সেন্ড করা
+     
         sent_msg = service.users().messages().send(
             userId='me', 
             body={
@@ -45,5 +45,5 @@ def send_gmail_reply(to_email, subject, body_text, thread_id, message_id):
         print(f"✅ ইমেইল পাঠানো হয়েছে! Message ID: {sent_msg['id']}")
         return True
     except Exception as e:
-        print(f"❌ এরর: {e}")
+        print(f" error: {e}")
         return False
